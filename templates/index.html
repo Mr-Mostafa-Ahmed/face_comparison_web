@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Face Comparison Tool</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .drag-drop-zone {
+        border: 2px dashed #cbd5e0;
+        transition: all 0.3s ease;
+      }
+      .drag-drop-zone.dragover {
+        border-color: #4299e1;
+        background-color: #ebf8ff;
+      }
+      .result-card {
+        transition: all 0.3s ease;
+      }
+      .delete-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(239, 68, 68, 0.9);
+        color: white;
+        padding: 8px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .delete-btn:hover {
+        background-color: rgb(239, 68, 68);
+        transform: scale(1.1);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-bold text-gray-800 mb-2">
+            Face Comparison Tool
+          </h1>
+          <p class="text-gray-600">
+            Upload two images to compare faces and determine if they're the same
+            person
+          </p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+          <!-- Image 1 Upload -->
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Image 1</h2>
+            <div
+              id="dropZone1"
+              class="drag-drop-zone rounded-lg p-8 text-center cursor-pointer"
+            >
+              <div class="mb-4">
+                <svg
+                  class="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  ></path>
+                </svg>
+              </div>
+              <p class="text-gray-600">Drop image here or click to upload</p>
+              <input type="file" id="image1" class="hidden" accept="image/*" />
+            </div>
+            <div id="preview1" class="mt-4 hidden">
+              <div class="relative">
+                <img
+                  src=""
+                  alt="Preview 1"
+                  class="max-w-full h-auto rounded-lg"
+                />
+                <button class="delete-btn" onclick="deleteImage(1)">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Image 2 Upload -->
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Image 2</h2>
+            <div
+              id="dropZone2"
+              class="drag-drop-zone rounded-lg p-8 text-center cursor-pointer"
+            >
+              <div class="mb-4">
+                <svg
+                  class="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  ></path>
+                </svg>
+              </div>
+              <p class="text-gray-600">Drop image here or click to upload</p>
+              <input type="file" id="image2" class="hidden" accept="image/*" />
+            </div>
+            <div id="preview2" class="mt-4 hidden">
+              <div class="relative">
+                <img
+                  src=""
+                  alt="Preview 2"
+                  class="max-w-full h-auto rounded-lg"
+                />
+                <button class="delete-btn" onclick="deleteImage(2)">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compare Button -->
+        <div class="text-center mb-8">
+          <button
+            id="compareBtn"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled
+          >
+            Compare Faces
+          </button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="hidden">
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Results</h2>
+            <div id="resultContent"></div>
+          </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="hidden">
+          <div class="flex items-center justify-center py-8">
+            <div
+              class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const dropZones = {
+          1: document.getElementById("dropZone1"),
+          2: document.getElementById("dropZone2"),
+        };
+        const fileInputs = {
+          1: document.getElementById("image1"),
+          2: document.getElementById("image2"),
+        };
+        const previews = {
+          1: document.getElementById("preview1"),
+          2: document.getElementById("preview2"),
+        };
+        const compareBtn = document.getElementById("compareBtn");
+        const loading = document.getElementById("loading");
+        const results = document.getElementById("results");
+        const resultContent = document.getElementById("resultContent");
+
+        // Handle drag and drop
+        [1, 2].forEach((num) => {
+          dropZones[num].addEventListener("click", () =>
+            fileInputs[num].click()
+          );
+
+          dropZones[num].addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropZones[num].classList.add("dragover");
+          });
+
+          dropZones[num].addEventListener("dragleave", () => {
+            dropZones[num].classList.remove("dragover");
+          });
+
+          dropZones[num].addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZones[num].classList.remove("dragover");
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith("image/")) {
+              handleFile(file, num);
+            }
+          });
+
+          fileInputs[num].addEventListener("change", (e) => {
+            if (e.target.files[0]) {
+              handleFile(e.target.files[0], num);
+            }
+          });
+        });
+
+        function handleFile(file, num) {
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          fileInputs[num].files = dataTransfer.files;
+
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            previews[num].querySelector("img").src = e.target.result;
+            previews[num].classList.remove("hidden");
+            dropZones[num].classList.add("hidden");
+            updateCompareButton();
+          };
+          reader.readAsDataURL(file);
+        }
+
+        function updateCompareButton() {
+          const hasFile1 = fileInputs[1].files.length > 0;
+          const hasFile2 = fileInputs[2].files.length > 0;
+          compareBtn.disabled = !(hasFile1 && hasFile2);
+        }
+
+        // Function to delete an image
+        window.deleteImage = function (num) {
+          fileInputs[num].value = "";
+          previews[num].querySelector("img").src = "";
+          previews[num].classList.add("hidden");
+          dropZones[num].classList.remove("hidden");
+          updateCompareButton();
+          results.classList.add("hidden");
+        };
+
+        compareBtn.addEventListener("click", async () => {
+          const formData = new FormData();
+          formData.append("image1", fileInputs[1].files[0]);
+          formData.append("image2", fileInputs[2].files[0]);
+
+          loading.classList.remove("hidden");
+          results.classList.add("hidden");
+          compareBtn.disabled = true;
+
+          try {
+            const response = await fetch("/compare", {
+              method: "POST",
+              body: formData,
+            });
+            const data = await response.json();
+
+            if (data.success) {
+              const colorClass = data.is_same_person
+                ? "text-green-600"
+                : "text-red-600";
+              resultContent.innerHTML = `
+                            <div class="space-y-4">
+                                <div class="text-2xl ${colorClass} font-bold">${data.message}</div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <div class="text-gray-600">Similarity Score</div>
+                                        <div class="text-xl font-semibold">${data.similarity_score}%</div>
+                                    </div>
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <div class="text-gray-600">Confidence Level</div>
+                                        <div class="text-xl font-semibold capitalize">${data.confidence}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+            } else {
+              resultContent.innerHTML = `
+                            <div class="bg-red-50 border-l-4 border-red-500 p-4">
+                                <div class="text-red-700">${data.error}</div>
+                            </div>
+                        `;
+            }
+          } catch (error) {
+            resultContent.innerHTML = `
+                        <div class="bg-red-50 border-l-4 border-red-500 p-4">
+                            <div class="text-red-700">An error occurred while processing the request.</div>
+                        </div>
+                    `;
+          }
+
+          loading.classList.add("hidden");
+          results.classList.remove("hidden");
+          compareBtn.disabled = false;
+        });
+      });
+    </script>
+  </body>
+</html>
